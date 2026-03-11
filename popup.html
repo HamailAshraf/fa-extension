@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fahhh! Extension</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+
+<body>
+  <div class="container">
+    <div class="logo-area">
+      <div class="emoji">😱</div>
+      <h1 class="title">Fahhh!</h1>
+      <p class="subtitle">API Fail Sound Alert</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <span class="toggle-label">Sound Alert</span>
+        <span class="toggle-desc" id="statusText">Currently OFF</span>
+      </div>
+      <label class="switch" id="toggleLabel" aria-label="Enable sound alert">
+        <input type="checkbox" id="toggleSwitch" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="divider"></div>
+
+    <p class="info-text">
+      Bad <strong>code!</strong> will jog your memory.
+    </p>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+
+</html>
