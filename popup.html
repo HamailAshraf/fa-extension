@@ -10,6 +10,8 @@
 
 <body>
   <div class="container">
+
+    <!-- ── Header ── -->
     <div class="logo-area">
       <div class="emoji">😱</div>
       <h1 class="title">Fahhh!</h1>
@@ -18,12 +20,13 @@
 
     <div class="divider"></div>
 
+    <!-- ── Master Toggle ── -->
     <div class="toggle-row">
       <div class="toggle-info">
         <span class="toggle-label">Sound Alert</span>
         <span class="toggle-desc" id="statusText">Currently OFF</span>
       </div>
-      <label class="switch" id="toggleLabel" aria-label="Enable sound alert">
+      <label class="switch" aria-label="Enable sound alert">
         <input type="checkbox" id="toggleSwitch" />
         <span class="slider"></span>
       </label>
@@ -31,9 +34,72 @@
 
     <div class="divider"></div>
 
-    <p class="info-text">
-      Bad <strong>code!</strong> will jog your memory.
-    </p>
+    <!-- ── Sound File Picker ── -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">🔊 Sound File</span>
+      </div>
+      <div class="sound-row">
+        <div class="sound-info">
+          <span class="sound-name" id="soundName">fahhhhh.mp3</span>
+          <button class="link-btn" id="resetSound" hidden>Reset to default</button>
+        </div>
+        <label class="btn-pill" id="chooseLabel" aria-label="Choose MP3 file">
+          Choose…
+          <input type="file" id="soundFilePicker" accept=".mp3,audio/mpeg" hidden />
+        </label>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ── 200s Interception ── -->
+    <div class="section">
+      <label class="check-row" id="play200sLabel">
+        <span class="check-text">
+          <span class="check-title">Play on 2xx responses</span>
+          <span class="check-desc">Intercept successful responses too</span>
+        </span>
+        <div class="toggle-mini">
+          <input type="checkbox" id="play200sCheck" />
+          <span class="slider-mini"></span>
+        </div>
+      </label>
+
+      <!-- Rules panel (shown when 200s is on) -->
+      <div class="rules-panel" id="rulesPanel">
+
+        <!-- Built-in: error key -->
+        <label class="rule-check-row">
+          <input type="checkbox" id="errorKeyCheck" class="native-cb" />
+          <span class="rule-check-label">
+            Play if response has an <code>"error"</code> key
+          </span>
+        </label>
+
+        <!-- Custom key-value rules -->
+        <div class="rules-header">
+          <span class="rules-title">Custom key → value rules</span>
+          <span class="rules-hint">Sound plays when response body matches any rule</span>
+        </div>
+
+        <!-- Rule chips rendered here -->
+        <div class="chips-area" id="chipsArea"></div>
+
+        <!-- Add rule form -->
+        <div class="add-rule-form">
+          <input type="text" id="ruleKey" placeholder='key  e.g. "status"' class="rule-input" />
+          <input type="text" id="ruleValue" placeholder='value  e.g. "FAILURE"' class="rule-input" />
+          <button class="btn-add" id="addRuleBtn">+ Add</button>
+        </div>
+        <p class="rule-hint">
+          Tip: use <code>[]</code> or <code>(empty)</code> as value to match empty arrays / objects.
+        </p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <p class="info-text">Bad <strong>code!</strong> will jog your memory.</p>
   </div>
 
   <script src="popup.js"></script>
