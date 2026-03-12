@@ -1,4 +1,6 @@
-// content.js
+// content.js — runs in ISOLATED world
+// Receives response bodies from injected.js (MAIN world) via postMessage,
+// evaluates rules, and plays sound when a rule matches.
 (function () {
   // ── State ────────────────────────────────────────────────────────────────────
   let audio = null;
@@ -13,7 +15,7 @@
   // ── Audio playback ────────────────────────────────────────────────────────────
   function buildAudioSrc() {
     if (settings.customSoundBase64) {
-      return settings.customSoundBase64; // already a data: URL stored as base64 data URI
+      return settings.customSoundBase64;
     }
     return chrome.runtime.getURL("fahhhhh.mp3");
   }
@@ -22,10 +24,8 @@
     if (isPlaying) return;
     const src = buildAudioSrc();
 
-    // Re-create audio if source changed or first time
     if (!audio || audio.dataset.src !== src) {
       audio = new Audio(src);
-      audio.dataset = audio.dataset || {};
       audio.dataset.src = src;
       audio.volume = 1.0;
       audio.onended = () => { isPlaying = false; };
@@ -55,14 +55,18 @@
       const actual = body[rule.key];
       if (actual === undefined) continue;
 
-      // Normalise to string for comparison (handles booleans, numbers, strings)
       const actualStr = String(actual).toLowerCase().trim();
       const expectedStr = String(rule.value).toLowerCase().trim();
 
-      // Also handle array / object emptiness: value "[]" or "(empty)"
+      // Handle array / object emptiness
       if (expectedStr === "[]" || expectedStr === "(empty)") {
         if (Array.isArray(actual) && actual.length === 0) return true;
-        if (actual !== null && typeof actual === "object" && !Array.isArray(actual) && Object.keys(actual).length === 0) return true;
+        if (
+          actual !== null &&
+          typeof actual === "object" &&
+          !Array.isArray(actual) &&
+          Object.keys(actual).length === 0
+        ) return true;
       } else if (actualStr === expectedStr) {
         return true;
       }
@@ -70,36 +74,21 @@
     return false;
   }
 
-  // ── Fetch/XHR interceptor for 2xx responses ───────────────────────────────────
-  const originalFetch = window.fetch;
-  window.fetch = async function (...args) {
-    const response = await originalFetch.apply(this, args);
-    try {
-      if (settings.play200s && response.status >= 200 && response.status < 300) {
-        const clone = response.clone();
-        clone.json().then((body) => {
-          if (shouldPlayFor200(body)) playFahhh();
-        }).catch(() => {});
-      }
-    } catch (_) {}
-    return response;
-  };
+  // ── Listen for response bodies from injected.js (MAIN world) ─────────────────
+  window.addEventListener("message", (event) => {
+    if (
+      event.source !== window ||
+      !event.data ||
+      event.data.type !== "__FA_RESPONSE__"
+    ) return;
 
-  const OriginalXHR = window.XMLHttpRequest;
-  function PatchedXHR() {
-    const xhr = new OriginalXHR();
-    xhr.addEventListener("readystatechange", function () {
-      if (xhr.readyState === 4 && settings.play200s && xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const body = JSON.parse(xhr.responseText);
-          if (shouldPlayFor200(body)) playFahhh();
-        } catch (_) {}
-      }
-    });
-    return xhr;
-  }
-  PatchedXHR.prototype = OriginalXHR.prototype;
-  window.XMLHttpRequest = PatchedXHR;
+    if (!settings.enabled) return;
+
+    const body = event.data.body;
+    if (shouldPlayFor200(body)) {
+      playFahhh();
+    }
+  });
 
   // ── Load settings ─────────────────────────────────────────────────────────────
   function applySettings(data) {
@@ -107,8 +96,7 @@
     settings.play200s = data.play200s ?? false;
     settings.rules200s = data.rules200s ?? [];
     settings.customSoundBase64 = data.customSoundBase64 ?? null;
-    // Reset cached audio so next play picks up new source
-    audio = null;
+    audio = null; // Reset cached audio so next play picks up new source
   }
 
   chrome.storage.sync.get(
@@ -120,11 +108,11 @@
     }
   );
 
-  // ── Message listener ──────────────────────────────────────────────────────────
+  // ── Message listener (from background.js) ────────────────────────────────────
   chrome.runtime.onMessage.addListener((message) => {
     if (message.action === "PLAY_FAHHH") {
-      // Triggered by background for non-2xx
-      playFahhh();
+      // Triggered by background for non-2xx HTTP status codes
+      if (settings.enabled) playFahhh();
     }
     if (message.action === "SETTINGS_UPDATED") {
       applySettings(message);
